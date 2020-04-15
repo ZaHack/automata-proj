@@ -1,40 +1,46 @@
 module linklang::ConcreteSyntax
 
-lexical Identifier = [a-zA-Z][a-zA-Z0-9]* !>> [a-zA-Z0-9];
+import Prelude;
+
+lexical Identifier = [a-zA-Z][a-zA-Z0-9]* !>> [a-zA-Z0-9] \ "Rule" \ "Node";
 lexical Whitespace = [\t-\n\r\ ]; 
 layout Layoutlist = Whitespace* !>> [\t-\n\r\ ];
 
-//missing rulelist component TODO
+//overall structure definition, parse start position
 start syntax Struct
-	= struct: Nodelist; 
+	= struct: LNode+ lnodes Rule+ rules; 
 
-// all nodes in the parsed langauge
-syntax Nodelist
-	= Node+;
-
-// each node type
-syntax Node
-	= "Node" Identifier NodeFeatures+ "end";
+// each node type, nodes are called lnode to avoid a name conflict with rascal
+syntax LNode
+	= lnode: "Node" Identifier name LNodeFeature+ features "end";
 
 // the properties of the node
-syntax NodeFeatures
-	= connect: "*" Identifier "[]"? ConnectOperator Identifier
-	| val: "^" Identifier "\<-" Type ; 
+syntax LNodeFeature
+	= connect: "*" Identifier name LinkOperator linkkind Identifier target
+	| lvalue: "^" Identifier name "\<-" Type ltype ; 
 
 // connection types
-syntax ConnectOperator
+syntax LinkOperator
 	= oneway: "-\>"
 	| twoway: "\<\>"
-	| back:   "\<-"
-	;
+	| back:   "\<-";
 
-//node data member types
+//node data member types, int are called lint to avoid a name conflict with rascal
 syntax Type
-	= "string"
-	| "int"
-	| "double"
-	;
+	= string: "string"
+	| lint: "int"
+	| double: "double";
 
-//TODO
-syntax Rulelist =
-	"Rule";
+//rule structure: name of rule, type of rule, parameters for rule
+syntax Rule 
+	= rule: "Rule" Identifier name Identifier rulekind "(" { Identifier "," }* parameters ")";
+
+//parse functions below
+
+public start[Struct] struct(str s) {
+	return parse(#start[Struct], s);
+}
+
+public start[Struct] struct(str s, loc l) {
+	return parse(#start[Struct], s, l);
+}

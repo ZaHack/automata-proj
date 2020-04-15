@@ -4,4 +4,5 @@ public str ex1 =
 "Node list 
  * next -\> list
  ^ data \<- int
-end";
+end
+Rule append add( list, next )";
