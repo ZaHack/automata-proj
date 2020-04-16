@@ -49,7 +49,7 @@ str getLType( double() ) = "double";
 //
 //BEGIN rule definitions
 //add: defines a adding method for a linked list like struct, good example of final method parameter generation, this creates a parameter for each data member of the target node 
-str getMethod( rule(str name, "add", [str lnodeName, str connectionName]), list[LNODE] lnodes){
+str getMethod( rule(str name, "append", [str lnodeName, str connectionName]), list[LNODE] lnodes){
 	if( lnode(lnodeName, list[LNODEFEATURE] feats ) <- lnodes, connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats ){
 		
 		return 	"public void <name>( <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
@@ -66,7 +66,59 @@ str getMethod( rule(str name, "add", [str lnodeName, str connectionName]), list[
 				'	newNode.<connectionName>b = current;<}>
 				'};";
 	};
-	throw "Invalid Rule description";
+	throw "Invalid Rule description append";
+}
+
+str getMethod( rule(str name, "prepend", [str lnodeName, str connectionName]), list[LNODE] lnodes){
+	if( lnode(lnodeName, list[LNODEFEATURE] feats) <- lnodes, connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats ){
+		return 	"public void <name>( <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
+				'	<lnodeName> newNode = new <lnodeName>();
+				'	<for (lvalue(str pname,_) <- feats) {>
+				'	newNode.<pname> = <pname>;<}>
+				'	<if (linkop := oneway()) {>
+				'	newNode.<connectionName> = handle;
+				'	handle = newNode;<}>
+				'	<if (linkop := twoway()) {>
+				'	newNode.<connectionName> = handle;
+				'	handle.<connectionName>b = newNode;
+				'	handle = newNode;<}>
+				'};";
+	};
+	throw "Invalid Rule description prepend";
+}
+
+str getMethod( rule(str name, "remove", [str lnodeName, str connectionName, str lvalueName]), list[LNODE] lnodes){
+	if( lnode(lnodeName, list[LNODEFEATURE] feats) <- lnodes, connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats, lvalue(lvalueName, LTYPE ltype) <- feats ){
+		return  "public void <name>(<getLType(ltype)> <lvalueName>){
+				'	<lnodeName> current = handle;
+				'	<if (linkop := oneway()){>
+				'	<lnodeName> previous = current;
+				'	while(current.<connectionName> != null && current.<lvalueName> != <lvalueName>){
+				'		previous = current;
+				'		current = current.<connectionName>;
+				'	}
+				'	if(current.<lvalueName> == <lvalueName>){
+				'		if(previous == current){
+				'			handle = current.<connectionName>;
+				'		}else{
+				'			previous.<connectionName> = current.<connectionName>;
+				'		}
+				'	}<}><if (linkop := twoway()){>
+				'	while(current.<connectionName> != null && current.<lvalueName> != <lvalueName>){
+				'		current = current.<connectionName>;
+				'	}
+				'	if(current.<lvalueName> == <lvalueName>){
+				'		if( handle == current ){
+				'			handle = current.<connectionName>;
+				'			current.<connectionName>.<connectionName>b = null;
+				'		}else{
+				'			current.<connectionName>b.<connectionName> = current.<connectionName>;
+				'			current.<connectionName>.<connectionName>b = current.<connectionName>b;
+				'		}
+				'	}<}>
+				'}";
+	};
+	throw "Invalid Rule description remove";
 }
 
 //not a method persay, tells the resulting structure where to look for the beggining of the link structure

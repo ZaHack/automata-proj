@@ -6,5 +6,6 @@ Node list
  * next -\> list
  ^ data \<- int
 end
-Rule append add( list, next )
-Rule getHead head( list )";
+Rule add append( list, next )
+Rule getHead head( list )
+Rule delete remove( list, next, data)";

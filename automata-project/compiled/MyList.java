@@ -24,5 +24,21 @@ public class MyList{
 	public list getHead(){
 		return handle;
 	}
+	public void delete(int data){
+		list current = handle;
+		
+		list previous = current;
+		while(current.next != null && current.data != data){
+			previous = current;
+			current = current.next;
+		}
+		if(current.data == data){
+			if(previous == current){
+				handle = current.next;
+			}else{
+				previous.next = current.next;
+			}
+		}
+	}
 
 }
