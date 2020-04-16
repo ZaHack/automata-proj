@@ -4,7 +4,7 @@ module linklang::AbstractSyntax
 public alias LinkLangId = str;
 
 //abstract data type for compile structure STRUCT
-public data STRUCT = struct(list[LNODE] lnodes, list[RULE] rules);
+public data STRUCT = struct( LinkLangId name, list[LNODE] lnodes, list[RULE] rules);
 
 //as above in struct for nodes
 public data LNODE = lnode( LinkLangId name, list[LNODEFEATURE] features);
