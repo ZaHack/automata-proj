@@ -187,7 +187,7 @@ str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, 
 				'					minRight = minRight.<connectNameLeft>;
 				'				}
 				'				if (minRight.<connectNameRight> != null){
-				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'					prev2.<connectNameLeft> = minRight.<connectNameRight>;
 				'				}
 				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
 				'				minRight.<connectNameRight> = current.<connectNameRight>;
@@ -206,7 +206,7 @@ str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, 
 				'					minRight = minRight.<connectNameLeft>;
 				'				}
 				'				if (minRight.<connectNameRight> != null){
-				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'					prev2.<connectNameLeft> = minRight.<connectNameRight>;
 				'				}
 				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
 				'				minRight.<connectNameRight> = current.<connectNameRight>;
@@ -225,7 +225,7 @@ str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, 
 				'					minRight = minRight.<connectNameLeft>;
 				'				}
 				'				if (minRight.<connectNameRight> != null){
-				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'					prev2.<connectNameLeft> = minRight.<connectNameRight>;
 				'				}
 				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
 				'				minRight.<connectNameRight> = current.<connectNameRight>;
