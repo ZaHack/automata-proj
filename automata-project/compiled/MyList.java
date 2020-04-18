@@ -10,15 +10,19 @@ public class MyList{
 	}
 		
 	
-	public void append( int data){
+	public void add( int data){
 		list newNode = new list();
 		
 		newNode.data = data;
 		list current = handle;
-		
-		while(current.next != null) current = current.next;
-		current.next = newNode;
-		
+		if(current == null ){
+			handle = newNode;
+		} else {
+			while(current.next != null) current = current.next;	
+			
+			current.next = newNode;
+			
+		}
 	};
 	public list handle = null;
 	public list getHead(){

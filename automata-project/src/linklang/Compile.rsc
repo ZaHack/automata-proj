@@ -67,13 +67,16 @@ str getMethod( rule(str name, "append", [str lnodeName, str connectionName]), li
 				'	<for (lvalue(str pname,_) <- feats) {>
 				'	newNode.<pname> = <pname>;<}>
 				'	<lnodeName> current = handle;
-				'	<if (linkop := oneway()) {>
-				'	while(current.<connectionName> != null) current = current.<connectionName>;
-				'	current.<connectionName> = newNode;<}>
-				'	<if (linkop := twoway()) {>
-				'	while(current.<connectionName>In != null) current = current.<connectionName>In;
-				'	current.<connectionName> = newNode;
-				'	newNode.<connectionName>b = current;<}>
+				'	if(current == null ){
+				'		handle = newNode;
+				'	} else {
+				'		while(current.<connectionName> != null) current = current.<connectionName>;	
+				'		<if (linkop := oneway()) {>
+				'		current.<connectionName> = newNode;<}>
+				'		<if (linkop := twoway()) {>
+				'		current.<connectionName> = newNode;
+				'		newNode.<connectionName>b = current;<}>
+				'	}
 				'};";
 	};
 	throw "Invalid Rule description append";
@@ -171,6 +174,69 @@ str getMethod( rule(str name, "remove", [str lnodeName, str connectionName, str 
 	};
 	throw "Invalid Rule description remove";
 }
+
+//removebin:
+str getMethod( rule(str name, "removebin", [str lnodeName, str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODE] lnodes){
+	if( lnode(lnodeName, list[LNODEFEATURE] feats) <- lnodes,
+		connect(connectNameLeft, LINKOPERATOR linkopl, lnodeName) <- feats,
+		connect(connectNameRight,LINKOPERATOR linkopr, lnodeName) <- feats,
+		lvalue(lvalueName, LTYPE ltype) <- feats ){
+		return  "public void <name>(<getLType(ltype)> <lvalueName>){
+				'	<lnodeName> current = handle;
+				'	if(handle == null) return;
+				'	while((current.<connectNameLeft> != null && current.<lvalueName> \> <lvalueName>)||(current.<connectNameRight> != null && current.<lvalueName> \< <lvalueName>)){
+				'		if(current.<lvalueName> \> <lvalueName>){
+				'			if(current.<connectNameLeft>.<lvalueName> != <lvalueName>)
+				'				current = current.<connectNameLeft>;
+				'			else break;
+				'		} else {
+				'			if(current.<connectNameRight>.<lvalueName> != <lvalueName>)
+				'				current = current.<connectNameRight>;
+				'			else break;
+				'		}
+				'	}
+				'	if(current.<lvalueName> == <lvalueName>){
+				'		if(current.<connectNameLeft> == null){
+				'			handle = current.<connectNameRight>;
+				'			<if(linkopr := twoway()){>handle.<connectNameRight>b = null;<}>
+				'		} else if (current.<connectNameRight> == null){
+				'			handle = current.<connectNameLeft>;
+				'			<if(linkopl := twoway()){>handle.<connectNameLeft>b = null;<}>
+				'		} else {
+				'			<lnodeName> minRight = current.<connectNameRight>;
+				'			<lnodeName> prev = minRight;
+				'			while(minRight.<connectNameLeft> != null){
+				'				prev = minRight;
+				'				minRight = minRight.<connectNameLeft>;
+				'			}
+				'			if (minRight.<connectNameRight> != null){
+				'				prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'				<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = null;<}>
+				'				<if(linkopl := twoway()){>prev.<connectNameLeft>.<connectNameLeft>b = prev;<}>
+				'			}
+				'			
+				'		}
+				'	} else if(current.<connectNameLeft> != null && current.<connectNameLeft>.<lvalueName> == <lvalueName>){
+				'		<if (linkopl := oneway()){>
+				'		current.<connectNameLeft> = newNode;<}>
+				'		<if (linkopl := twoway()){>
+				'		current.<connectNameLeft> = newNode;
+				'		newNode.<connectNameLeft>b = current;<}>
+				'	} else if ( current.<connectNameRight> != null && current.<connectNameRight>.<lvalueName> == <lvalueName>) {
+				'		<if (linkopr := oneway()){>
+				'		current.<connectNameRight> = newNode;<}>
+				'		<if (linkopr := twoway()){>
+				'		current.<connectNameRight> = newNode;
+				'		newNode.<connectNameRight>b = current;<}>
+				'	} else {
+				'		<for (lvalue(str pname,_) <- feats) {>
+				'		current.<pname> = <pname>;<}>
+				'	}
+				'};";
+	};
+	throw "Invalid Rule description remove";
+}
+
 
 //head: indicates what node is the "root" of the structure,
 //	ideally this would be implemented differently but time constraints mean this will work
