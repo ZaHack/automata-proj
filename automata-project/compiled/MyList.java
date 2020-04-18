@@ -7,17 +7,15 @@ public class MyList{
 	
 	public static MyList add( MyList handle, int data){
 		MyList newNode = new MyList();
-		
 		newNode.data = data;
 		MyList current = handle;
 		if(current == null ){
 			handle = newNode;
 		} else {
 			while(current.next != null) current = current.next;	
-			
-			
 			current.next = newNode;
 			newNode.nextb = current;
+			
 		}
 		return handle;
 	};
@@ -25,6 +23,7 @@ public class MyList{
 		MyList newNode = new MyList();
 		newNode.data = data;
 		newNode.next = handle;
+		if(handle != null) handle.nextb = newNode;
 		return newNode;
 	};
 	public static MyList delete( MyList handle, int data){
@@ -37,22 +36,12 @@ public class MyList{
 		if(current.data == data){
 			if( handle == current ){
 				handle = current.next;
-				current.next.nextb = null;
+				if(current.next != null) current.next.nextb = null;
 			}else{
 				current.nextb.next = current.next;
-				current.next.nextb = current.nextb;
+				if(current.next != null) current.next.nextb = null;
 			}
 		}
 		return handle;
 	}
-   
-   public static void main(String[] args){
-      MyList list = null;
-      for(int i = 0; i < 10; i++){
-         list = MyList.add(list,i);
-      }
-      for(MyList j = list; j != null; j = j.next){
-         System.out.println(j.data);
-      }
-   }
 }

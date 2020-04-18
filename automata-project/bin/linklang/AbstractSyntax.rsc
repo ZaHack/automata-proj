@@ -27,7 +27,7 @@ public data RULE = rule(LinkLangId name, LinkLangId rulekind, list[LinkLangId] p
 
 // debug and analysis utility
 anno loc STRUCT@location;
-anno loc LNODEFEATURE@location;
+anno loc FEATURE@location;
 anno loc LINKOPERATOR@location;
 anno loc LTYPE@location;
 anno loc RULE@location;
