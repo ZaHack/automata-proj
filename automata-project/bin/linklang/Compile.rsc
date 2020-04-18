@@ -53,7 +53,7 @@ str getLType( double() ) = "double";
 //append: defines a adding method for a linked list like struct, good example of final method parameter generation, this creates a parameter for each data member of the target node 
 str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), list[LNODEFEATURE] features){
 	if( connect(connectionName, LINKOPERATOR linkop,_) <- features ){
-		return 	"public <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- features ])>){
+		return 	"public static <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- features ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
 				'	<for (lvalue(str pname,_) <- features) {>
 				'	newNode.<pname> = <pname>;<}>
@@ -75,9 +75,9 @@ str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), li
 }
 
 //prepend: similar as above, adds new list elements to the front of the list
-str getMethod( str lnodeName, rule(str name, "prepend", [str lnodeName, str connectionName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "prepend", [str connectionName]), list[LNODEFEATURE] feats){
 	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats ){
-		return 	"public <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
+		return 	"public static <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
 				'	<for (lvalue(str pname,_) <- feats) {>
 				'	newNode.<pname> = <pname>;<}>
@@ -94,15 +94,16 @@ str getMethod( str lnodeName, rule(str name, "prepend", [str lnodeName, str conn
 }
 
 //addbin: add function for binary search tree like structures
-str getMethod( rule(str name, "addbin", [str lnodeName, str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
-	if( connect( connectNameLeft, LINKOPERATOR linkopl, lnodeName) <- feats, 
-		connect( connectNameRight, LINKOPERATOR linkopr, lnodeName) <- feats,
+str getMethod( str lnodeName, rule(str name, "addbin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
+	if( connect( connectNameLeft, LINKOPERATOR linkopl, _) <- feats, 
+		connect( connectNameRight, LINKOPERATOR linkopr, _) <- feats,
 		lvalue( lvalueName,_) <- feats){
-		return  "public void <name>(<intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
+		return  "public static <lnodeName> <name>( <lnodeName> root, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
 				'	<for (lvalue(str pname,_) <- feats) {>
 				'	newNode.<pname> = <pname>;<}>
-				'	<lnodeName> current = handle;
+				'	if(root==null) return newNode;
+				'	<lnodeName> current = root;
 				'	while((current.<connectNameLeft> != null && current.<lvalueName> \> <lvalueName>)||(current.<connectNameRight> != null && current.<lvalueName> \< <lvalueName>)){
 				'		if(current.<lvalueName> \> <lvalueName>){
 				'			current = current.<connectNameLeft>;
@@ -126,6 +127,7 @@ str getMethod( rule(str name, "addbin", [str lnodeName, str connectNameLeft, str
 				'		<for (lvalue(str pname,_) <- feats) {>
 				'		current.<pname> = <pname>;<}>
 				'	}
+				'	return root;
 				'};";
 	};
 	throw "Invalid Rule description addbin";
@@ -133,9 +135,10 @@ str getMethod( rule(str name, "addbin", [str lnodeName, str connectNameLeft, str
 
 //remove: delete function for link list like structures
 str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str lvalueName]), list[LNODEFEATURE] feats){
-	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats,
+	if( connect(connectionName, LINKOPERATOR linkop, _) <- feats,
 		lvalue(lvalueName, LTYPE ltype) <- feats ){
-		return  "public <lnodeName> <name>( <lnodeName> handle, <getLType(ltype)> <lvalueName>){
+		return  "public static <lnodeName> <name>( <lnodeName> handle, <getLType(ltype)> <lvalueName>){
+				'	if(handle == null) return null;
 				'	<lnodeName> current = handle;
 				'	<if (linkop := oneway()){>
 				'	<lnodeName> previous = current;
@@ -169,13 +172,13 @@ str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str 
 }
 
 //removebin:
-str getMethod( rule(str name, "removebin", [str lnodeName, str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
 	if( connect(connectNameLeft, LINKOPERATOR linkopl, lnodeName) <- feats,
 		connect(connectNameRight,LINKOPERATOR linkopr, lnodeName) <- feats,
 		lvalue(lvalueName, LTYPE ltype) <- feats ){
-		return  "public void <name>(<getLType(ltype)> <lvalueName>){
-				'	<lnodeName> current = handle;
-				'	if(handle == null) return;
+		return  "public static <lnodeName> <name>( <lnodeName> root, <getLType(ltype)> <lvalueName>){
+				'	if(root == null) return null;
+				'	<lnodeName> current = root;
 				'	while((current.<connectNameLeft> != null && current.<lvalueName> \> <lvalueName>)||(current.<connectNameRight> != null && current.<lvalueName> \< <lvalueName>)){
 				'		if(current.<lvalueName> \> <lvalueName>){
 				'			if(current.<connectNameLeft>.<lvalueName> != <lvalueName>)
@@ -215,7 +218,7 @@ str getMethod( rule(str name, "removebin", [str lnodeName, str connectNameLeft, 
 				'		}
 				'	} else if(current.<connectNameLeft> != null && current.<connectNameLeft>.<lvalueName> == <lvalueName>){
 				'		if(current.<connectNameLeft>.<connectNameLeft> == null && current.<connectNameLeft>.<connectNameRight> == null){
-				'			current.<connectNameLeft> == null;
+				'			current.<connectNameLeft> = null;
 				'		} else if(current.<connectNameLeft>.<connectNameLeft> == null){
 				'			current.<connectNameLeft> = current.<connectNameLeft>.<connectNameRight>;
 				'			<if(linkopr := twoway()){>current.<connectNameLeft>.<connectNameRight>b = null;<}>
@@ -245,7 +248,7 @@ str getMethod( rule(str name, "removebin", [str lnodeName, str connectNameLeft, 
 				'		}
 				'	} else if ( current.<connectNameRight> != null && current.<connectNameRight>.<lvalueName> == <lvalueName>) {
 				'		if(current.<connectNameRight>.<connectNameLeft> == null && current.<connectNameRight>.<connectNameRight> == null){
-				'			current.<connectNameRight> == null;
+				'			current.<connectNameRight> = null;
 				'		} else if(current.<connectNameRight>.<connectNameLeft> == null){
 				'			current.<connectNameRight> = current.<connectNameRight>.<connectNameRight>;
 				'			<if(linkopr := twoway()){>current.<connectNameRight>.<connectNameRight>b = current;<}>			

@@ -1,12 +1,10 @@
 module samples::ex2
 
 public str ex2 =
-"Define MyBSTree
-Node branch
- * right -\> branch
- * left \<\> branch
+"Node MyBSTree
+ * right -\> MyBSTree
+ * left -\> MyBSTree
  ^ data \<- int
 end
-Rule root head( branch )
-Rule insert addbin( branch, left, right, data )
-Rule delete removebin( branch, left, right, data )";
+Rule insert addbin( left, right, data )
+Rule delete removebin( left, right, data )";

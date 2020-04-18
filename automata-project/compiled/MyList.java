@@ -5,7 +5,7 @@ public class MyList{
 	public MyList next;
 		
 	
-	public MyList add( MyList handle, int data){
+	public static MyList add( MyList handle, int data){
 		MyList newNode = new MyList();
 		
 		newNode.data = data;
@@ -20,7 +20,17 @@ public class MyList{
 		}
 		return handle;
 	};
-	public MyList delete( MyList handle, int data){
+	public static MyList pushFront( MyList handle, int data){
+		MyList newNode = new MyList();
+		
+		newNode.data = data;
+		
+		newNode.next = handle;
+		return newNode;
+		
+	};
+	public static MyList delete( MyList handle, int data){
+		if(handle == null) return null;
 		MyList current = handle;
 		
 		MyList previous = current;
@@ -37,4 +47,11 @@ public class MyList{
 		}
 		return handle;
 	}
+   public static void main(String[] args){
+      MyList list = new MyList();
+      list = MyList.add(list, 1);
+      list = MyList.pushFront(list, 10);
+      list = MyList.delete(list,1);
+      System.out.println(list.data);
+   }
 }
