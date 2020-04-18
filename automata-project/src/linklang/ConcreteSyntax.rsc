@@ -8,18 +8,17 @@ layout Layoutlist = Whitespace* !>> [\t-\n\r\ ];
 
 //overall structure definition, parse start position
 start syntax Struct
-	= struct: "Node" Identifier name LNodeFeature+ features "end" Rule+ rules; 
+	= struct: "Node" Identifier name Feature+ features "end" Rule+ rules; 
 
 // the properties of the node
-syntax LNodeFeature
+syntax Feature
 	= connect: "*" Identifier name LinkOperator linkkind Identifier target
 	| lvalue: "^" Identifier name "\<-" Type ltype ; 
 
 // connection types
 syntax LinkOperator
 	= oneway: "-\>"
-	| twoway: "\<\>"
-	| back:   "\<-";
+	| twoway: "\<\>";
 
 //node data member types, int are called lint to avoid a name conflict with rascal
 syntax Type

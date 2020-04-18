@@ -3,7 +3,7 @@ public class MyList{
 	public int data;
 	
 	public MyList next;
-		
+	public MyList nextb;	
 	
 	public static MyList add( MyList handle, int data){
 		MyList newNode = new MyList();
@@ -15,43 +15,44 @@ public class MyList{
 		} else {
 			while(current.next != null) current = current.next;	
 			
-			current.next = newNode;
 			
+			current.next = newNode;
+			newNode.nextb = current;
 		}
 		return handle;
 	};
 	public static MyList pushFront( MyList handle, int data){
 		MyList newNode = new MyList();
-		
 		newNode.data = data;
-		
 		newNode.next = handle;
 		return newNode;
-		
 	};
 	public static MyList delete( MyList handle, int data){
 		if(handle == null) return null;
 		MyList current = handle;
 		
-		MyList previous = current;
 		while(current.next != null && current.data != data){
-			previous = current;
 			current = current.next;
 		}
 		if(current.data == data){
-			if(previous == current){
+			if( handle == current ){
 				handle = current.next;
+				current.next.nextb = null;
 			}else{
-				previous.next = current.next;
+				current.nextb.next = current.next;
+				current.next.nextb = current.nextb;
 			}
 		}
 		return handle;
 	}
+   
    public static void main(String[] args){
-      MyList list = new MyList();
-      list = MyList.add(list, 1);
-      list = MyList.pushFront(list, 10);
-      list = MyList.delete(list,1);
-      System.out.println(list.data);
+      MyList list = null;
+      for(int i = 0; i < 10; i++){
+         list = MyList.add(list,i);
+      }
+      for(MyList j = list; j != null; j = j.next){
+         System.out.println(j.data);
+      }
    }
 }

@@ -23,8 +23,11 @@ str compile(str s){ return compile(load(s));}
 
 // compile from struct, main compilation function, takes load output
 str compile(STRUCT s) {
+	
+	//map[str,str] connect;
+	
 	//verify the resulting struct is of the proper form
-	if (struct(str structName,list[LNODEFEATURE] feats, list[RULE] rules) := s) {
+	if (struct(str structName,list[FEATURE] feats, list[RULE] rules) := s) {
 		return  "public class <structName>{
 				'	<for ( lvalue(str fname, LTYPE ltype) <- feats) {>
 				'	public <getLType(ltype)> <fname>;<}>
@@ -51,22 +54,20 @@ str getLType( double() ) = "double";
 //
 //BEGIN rule definitions
 //append: defines a adding method for a linked list like struct, good example of final method parameter generation, this creates a parameter for each data member of the target node 
-str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), list[LNODEFEATURE] features){
+str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), list[FEATURE] features){
 	if( connect(connectionName, LINKOPERATOR linkop,_) <- features ){
 		return 	"public static <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- features ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
-				'	<for (lvalue(str pname,_) <- features) {>
-				'	newNode.<pname> = <pname>;<}>
-				'	<lnodeName> current = handle;
+				'	<for (lvalue(str pname,_) <- features){>newNode.<pname> = <pname>;
+				'	<}><lnodeName> current = handle;
 				'	if(current == null ){
 				'		handle = newNode;
 				'	} else {
 				'		while(current.<connectionName> != null) current = current.<connectionName>;	
-				'		<if (linkop := oneway()) {>
-				'		current.<connectionName> = newNode;<}>
-				'		<if (linkop := twoway()) {>
-				'		current.<connectionName> = newNode;
-				'		newNode.<connectionName>b = current;<}>
+				'		<if (linkop := oneway()) {>current.<connectionName> = newNode;
+				'		<}><if (linkop := twoway()) {>current.<connectionName> = newNode;
+				'		newNode.<connectionName>b = current;
+				'		<}>
 				'	}
 				'	return handle;
 				'};";
@@ -75,28 +76,23 @@ str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), li
 }
 
 //prepend: similar as above, adds new list elements to the front of the list
-str getMethod( str lnodeName, rule(str name, "prepend", [str connectionName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "prepend", [str connectionName]), list[FEATURE] feats){
 	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats ){
 		return 	"public static <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
-				'	<for (lvalue(str pname,_) <- feats) {>
-				'	newNode.<pname> = <pname>;<}>
-				'	<if (linkop := oneway()) {>
+				'	<for (lvalue(str pname,_)<-feats){>newNode.<pname> = <pname>;<}>
 				'	newNode.<connectionName> = handle;
-				'	return newNode;<}>
-				'	<if (linkop := twoway()) {>
-				'	newNode.<connectionName> = handle;
-				'	handle.<connectionName>b = newNode;
-				'	return newNode;<}>
+				'	<if (linkop := twoway()) {>if(handle != null) handle.<connectionName>b = newNode;
+				'	<}>return newNode;
 				'};";
 	};
 	throw "Invalid Rule description prepend";
 }
 
-//addbin: add function for binary search tree like structures
-str getMethod( str lnodeName, rule(str name, "addbin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
-	if( connect( connectNameLeft, LINKOPERATOR linkopl, _) <- feats, 
-		connect( connectNameRight, LINKOPERATOR linkopr, _) <- feats,
+//addbin: add function for binary search tree like structures, twoway() is not supported for binary search trees
+str getMethod( str lnodeName, rule(str name, "addbin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[FEATURE] feats){
+	if( connect( connectNameLeft,_,_) <- feats, 
+		connect( connectNameRight,_,_) <- feats,
 		lvalue( lvalueName,_) <- feats){
 		return  "public static <lnodeName> <name>( <lnodeName> root, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
@@ -105,24 +101,15 @@ str getMethod( str lnodeName, rule(str name, "addbin", [str connectNameLeft, str
 				'	if(root==null) return newNode;
 				'	<lnodeName> current = root;
 				'	while((current.<connectNameLeft> != null && current.<lvalueName> \> <lvalueName>)||(current.<connectNameRight> != null && current.<lvalueName> \< <lvalueName>)){
-				'		if(current.<lvalueName> \> <lvalueName>){
+				'		if(current.<lvalueName> \> <lvalueName>)
 				'			current = current.<connectNameLeft>;
-				'		} else {
+				'		else
 				'			current = current.<connectNameRight>;
-				'		}
 				'	}
 				'	if(current.<lvalueName> \> <lvalueName>){
-				'		<if (linkopl := oneway()){>
-				'		current.<connectNameLeft> = newNode;<}>
-				'		<if (linkopl := twoway()){>
 				'		current.<connectNameLeft> = newNode;
-				'		newNode.<connectNameLeft>b = current;<}>
 				'	} else if (current.<lvalueName> \< <lvalueName>) {
-				'		<if (linkopr := oneway()){>
-				'		current.<connectNameRight> = newNode;<}>
-				'		<if (linkopr := twoway()){>
 				'		current.<connectNameRight> = newNode;
-				'		newNode.<connectNameRight>b = current;<}>
 				'	} else {
 				'		<for (lvalue(str pname,_) <- feats) {>
 				'		current.<pname> = <pname>;<}>
@@ -134,7 +121,7 @@ str getMethod( str lnodeName, rule(str name, "addbin", [str connectNameLeft, str
 }
 
 //remove: delete function for link list like structures
-str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str lvalueName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str lvalueName]), list[FEATURE] feats){
 	if( connect(connectionName, LINKOPERATOR linkop, _) <- feats,
 		lvalue(lvalueName, LTYPE ltype) <- feats ){
 		return  "public static <lnodeName> <name>( <lnodeName> handle, <getLType(ltype)> <lvalueName>){
@@ -159,10 +146,10 @@ str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str 
 				'	if(current.<lvalueName> == <lvalueName>){
 				'		if( handle == current ){
 				'			handle = current.<connectionName>;
-				'			current.<connectionName>.<connectionName>b = null;
+				'			if(current.<connectionName> != null) current.<connectionName>.<connectionName>b = null;
 				'		}else{
 				'			current.<connectionName>b.<connectionName> = current.<connectionName>;
-				'			current.<connectionName>.<connectionName>b = current.<connectionName>b;
+				'			if(current.<connectionName> != null) current.<connectionName>.<connectionName>b = null;
 				'		}
 				'	}<}>
 				'	return handle;
@@ -172,124 +159,82 @@ str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str 
 }
 
 //removebin:
-str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[LNODEFEATURE] feats){
-	if( connect(connectNameLeft, LINKOPERATOR linkopl, lnodeName) <- feats,
-		connect(connectNameRight,LINKOPERATOR linkopr, lnodeName) <- feats,
+str getMethod( str lnodeName, rule(str name, "removebin", [str connectNameLeft, str connectNameRight, str lvalueName]), list[FEATURE] feats){
+	if( connect(connectNameLeft, _,_) <- feats,
+		connect(connectNameRight,_,_) <- feats,
 		lvalue(lvalueName, LTYPE ltype) <- feats ){
 		return  "public static <lnodeName> <name>( <lnodeName> root, <getLType(ltype)> <lvalueName>){
 				'	if(root == null) return null;
-				'	<lnodeName> current = root;
-				'	while((current.<connectNameLeft> != null && current.<lvalueName> \> <lvalueName>)||(current.<connectNameRight> != null && current.<lvalueName> \< <lvalueName>)){
-				'		if(current.<lvalueName> \> <lvalueName>){
-				'			if(current.<connectNameLeft>.<lvalueName> != <lvalueName>)
-				'				current = current.<connectNameLeft>;
-				'			else break;
-				'		} else {
-				'			if(current.<connectNameRight>.<lvalueName> != <lvalueName>)
-				'				current = current.<connectNameRight>;
-				'			else break;
-				'		}
+				'	<lnodeName> current = root, previous = root;
+				'	while(current.<lvalueName> != <lvalueName>){
+				'		previous = current;
+				'		if(current.<lvalueName> \> <lvalueName>)
+				'			current = current.<connectNameLeft>;
+				'		else
+				'			current = current.<connectNameRight>;
 				'	}
 				'	if(current.<lvalueName> == <lvalueName>){
-				'		if(current.<connectNameLeft> == null){
-				'			handle = current.<connectNameRight>;
-				'			<if(linkopr := twoway()){>handle.<connectNameRight>b = null;<}>
-				'		} else if (current.<connectNameRight> == null){
-				'			handle = current.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>handle.<connectNameLeft>b = null;<}>
-				'		} else {
-				'			<lnodeName> minRight = current.<connectNameRight>;
-				'			<lnodeName> prev = minRight;
-				'			while(minRight.<connectNameLeft> != null){
-				'				prev = minRight;
-				'				minRight = minRight.<connectNameLeft>;
+				'		if(current == previous){
+				'			if(current.<connectNameLeft> == null){
+				'				root = current.<connectNameRight>;
+				'			} else if (current.<connectNameRight> == null){
+				'				root = current.<connectNameLeft>;
+				'			} else {
+				'				<lnodeName> minRight = current.<connectNameRight>;
+				'				<lnodeName> prev2 = minRight;
+				'				while(minRight.<connectNameLeft> != null){
+				'					prev2 = minRight;
+				'					minRight = minRight.<connectNameLeft>;
+				'				}
+				'				if (minRight.<connectNameRight> != null){
+				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'				}
+				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
+				'				minRight.<connectNameRight> = current.<connectNameRight>;
+				'				root = minRight;
 				'			}
-				'			if (minRight.<connectNameRight> != null){
-				'				prev.<connectNameLeft> = minRight.<connectNameRight>;
-				'				<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = null;<}>
-				'				<if(linkopl := twoway()){>minRight.<connectNameLeft>b = null;
-				'				prev.<connectNameLeft>.<connectNameLeft>b = prev;<}>
+				'		} else if(previous.<connectNameLeft> == current){
+				'			if(current.<connectNameLeft> == null){
+				'				previous.<connectNameLeft> = current.<connectNameRight>;
+				'			} else if (current.<connectNameRight> == null){
+				'				previous.<connectNameLeft> = current.<connectNameLeft>;
+				'			} else {
+				'				<lnodeName> minRight = current.<connectNameRight>;
+				'				<lnodeName> prev2 = minRight;
+				'				while(minRight.<connectNameLeft> != null){
+				'					prev2 = minRight;
+				'					minRight = minRight.<connectNameLeft>;
+				'				}
+				'				if (minRight.<connectNameRight> != null){
+				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'				}
+				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
+				'				minRight.<connectNameRight> = current.<connectNameRight>;
+				'				previous.<connectNameLeft> = minRight;
 				'			}
-				'			minRight.<connectNameLeft> = current.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>minRight.<connectNameLeft>.<connectNameLeft>b = minRight;<}>
-				'			minRight.<connectNameRight> = current.<connectNameRight>;
-				'			<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = minRight;<}>
-				'			handle = minRight;
-				'		}
-				'	} else if(current.<connectNameLeft> != null && current.<connectNameLeft>.<lvalueName> == <lvalueName>){
-				'		if(current.<connectNameLeft>.<connectNameLeft> == null && current.<connectNameLeft>.<connectNameRight> == null){
-				'			current.<connectNameLeft> = null;
-				'		} else if(current.<connectNameLeft>.<connectNameLeft> == null){
-				'			current.<connectNameLeft> = current.<connectNameLeft>.<connectNameRight>;
-				'			<if(linkopr := twoway()){>current.<connectNameLeft>.<connectNameRight>b = null;<}>
-				'			<if(linkopl := twoway()){>current.<connectNameLeft>.<connectNameLeft>b = current;<}>
-				'		} else if(current.<connectNameLeft>.<connectNameRight> == null){
-				'			current.<connectNameLeft> = current.<connectNameLeft>.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>current.<connectNameLeft>.<connectNameLeft>b = current;<}>
-				'		} else {
-				'			<lnodeName> minRight = current.<connectNameLeft>.<connectNameRight>;
-				'			<lnodeName> prev = minRight;
-				'			while(minRight.<connectNameLeft> != null){
-				'				prev = minRight;
-				'				minRight = minRight.<connectNameLeft>;
+				'		} else if(previous.<connectNameRight> == current){
+				'			if(current.<connectNameLeft> == null){
+				'				previous.<connectNameRight> = current.<connectNameRight>;
+				'			} else if (current.<connectNameRight> == null){
+				'				previous.<connectNameRight> = current.<connectNameLeft>;
+				'			} else {
+				'				<lnodeName> minRight = current.<connectNameRight>;
+				'				<lnodeName> prev2 = minRight;
+				'				while(minRight.<connectNameLeft> != null){
+				'					prev2 = minRight;
+				'					minRight = minRight.<connectNameLeft>;
+				'				}
+				'				if (minRight.<connectNameRight> != null){
+				'					prev.<connectNameLeft> = minRight.<connectNameRight>;
+				'				}
+				'				minRight.<connectNameLeft> = current.<connectNameLeft>;
+				'				minRight.<connectNameRight> = current.<connectNameRight>;
+				'				previous.<connectNameRight> = minRight;
 				'			}
-				'			if (minRight.<connectNameRight> != null){
-				'				prev.<connectNameLeft> = minRight.<connectNameRight>;
-				'				<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = null;<}>
-				'				<if(linkopl := twoway()){>minRight.<connectNameLeft>b = null;
-				'				prev.<connectNameLeft>.<connectNameLeft>b = prev;<}>
-				'			}
-				'			minRight.<connectNameLeft> = current.<connectNameLeft>.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>minRight.<connectNameLeft>.<connectNameLeft>b = minRight;
-				'			minRight.<connectNameLeft>b = current;<}>
-				'			minRight.<connectNameRight> = current.<connectNameLeft>.<connectNameRight>;
-				'			<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = minRight;<}>
-				'			current.<connectNameLeft> = minRight;
-				'		}
-				'	} else if ( current.<connectNameRight> != null && current.<connectNameRight>.<lvalueName> == <lvalueName>) {
-				'		if(current.<connectNameRight>.<connectNameLeft> == null && current.<connectNameRight>.<connectNameRight> == null){
-				'			current.<connectNameRight> = null;
-				'		} else if(current.<connectNameRight>.<connectNameLeft> == null){
-				'			current.<connectNameRight> = current.<connectNameRight>.<connectNameRight>;
-				'			<if(linkopr := twoway()){>current.<connectNameRight>.<connectNameRight>b = current;<}>			
-				'		} else if(current.<connectNameRight>.<connectNameRight> == null){
-				'			current.<connectNameRight> = current.<connectNameRight>.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>current.<connectNameRight>.<connectNameLeft>b = null;<}>
-				'			<if(linkopr := twoway()){>current.<connectNameRight>.<connectNameRight>b = current;<}>
-				'		} else {
-				'			<lnodeName> minRight = current.<connectNameRight>.<connectNameRight>;
-				'			<lnodeName> prev = minRight;
-				'			while(minRight.<connectNameLeft> != null){
-				'				prev = minRight;
-				'				minRight = minRight.<connectNameLeft>;
-				'			}
-				'			if (minRight.<connectNameRight> != null){
-				'				prev.<connectNameLeft> = minRight.<connectNameRight>;
-				'				<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = null;<}>
-				'				<if(linkopl := twoway()){>minRight.<connectNameLeft>b = null;
-				'				prev.<connectNameLeft>.<connectNameLeft>b = prev;<}>
-				'			}
-				'			minRight.<connectNameLeft> = current.<connectNameRight>.<connectNameLeft>;
-				'			<if(linkopl := twoway()){>minRight.<connectNameLeft>.<connectNameLeft>b = minRight;<}>
-				'			minRight.<connectNameRight> = current.<connectNameRight>.<connectNameRight>;
-				'			<if(linkopr := twoway()){>minRight.<connectNameRight>.<connectNameRight>b = minRight;
-				'			minRight.<connectNameRight>b = current;<}>
-				'			current.<connectNameRight> = minRight;
 				'		}
 				'	}
+				'	return root;
 				'};";
 	};
 	throw "Invalid Rule description remove";
 }
-
-
-
-//head: indicates what node is the "root" of the structure,
-//	ideally this would be implemented differently but time constraints mean this will work
-str getMethod( rule(str name, "head", [str lnodeName ]), list[LNODEFEATURE] feats ){
-	return  "public <lnodeName> handle = null;
-			'public <lnodeName> <name>(){
-			'	return handle;
-			'}";
-}
-
