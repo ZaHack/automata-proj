@@ -4,10 +4,7 @@ module linklang::AbstractSyntax
 public alias LinkLangId = str;
 
 //abstract data type for compile structure STRUCT
-public data STRUCT = struct( LinkLangId name, list[LNODE] lnodes, list[RULE] rules);
-
-//as above in struct for nodes
-public data LNODE = lnode( LinkLangId name, list[LNODEFEATURE] features);
+public data STRUCT = struct( LinkLangId name, list[LNODEFEATURE] features, list[RULE] rules);
 
 // as above, notice each kind of feature has a seperate abstract type either connect of lvalue
 public data LNODEFEATURE
@@ -31,7 +28,6 @@ public data RULE = rule(LinkLangId name, LinkLangId rulekind, list[LinkLangId] p
 
 // debug and analysis utility
 anno loc STRUCT@location;
-anno loc LNODE@location;
 anno loc LNODEFEATURE@location;
 anno loc LINKOPERATOR@location;
 anno loc LTYPE@location;

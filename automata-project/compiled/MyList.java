@@ -1,20 +1,15 @@
 public class MyList{
 	
-	private class list {
-		
-		public int data;
-		
-		public list next;
-		
-		
-	}
+	public int data;
+	
+	public MyList next;
 		
 	
-	public void add( int data){
-		list newNode = new list();
+	public MyList add( MyList handle, int data){
+		MyList newNode = new MyList();
 		
 		newNode.data = data;
-		list current = handle;
+		MyList current = handle;
 		if(current == null ){
 			handle = newNode;
 		} else {
@@ -24,14 +19,10 @@ public class MyList{
 			
 		}
 	};
-	public list handle = null;
-	public list getHead(){
-		return handle;
-	}
-	public void delete(int data){
-		list current = handle;
+	public MyList delete( MyList handle, int data){
+		MyList current = handle;
 		
-		list previous = current;
+		MyList previous = current;
 		while(current.next != null && current.data != data){
 			previous = current;
 			current = current.next;
@@ -44,5 +35,4 @@ public class MyList{
 			}
 		}
 	}
-
 }

@@ -8,11 +8,7 @@ layout Layoutlist = Whitespace* !>> [\t-\n\r\ ];
 
 //overall structure definition, parse start position
 start syntax Struct
-	= struct: "Define" Identifier name LNode+ lnodes Rule+ rules; 
-
-// each node type, nodes are called lnode to avoid a name conflict with rascal
-syntax LNode
-	= lnode: "Node" Identifier name LNodeFeature+ features "end";
+	= struct: "Node" Identifier name LNodeFeature+ features "end" Rule+ rules; 
 
 // the properties of the node
 syntax LNodeFeature
