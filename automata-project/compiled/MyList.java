@@ -18,6 +18,7 @@ public class MyList{
 			current.next = newNode;
 			
 		}
+		return handle;
 	};
 	public MyList delete( MyList handle, int data){
 		MyList current = handle;
@@ -34,5 +35,6 @@ public class MyList{
 				previous.next = current.next;
 			}
 		}
+		return handle;
 	}
 }

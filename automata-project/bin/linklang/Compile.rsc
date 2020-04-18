@@ -32,7 +32,7 @@ str compile(STRUCT s) {
 				'	public <target> <fname>;
 				'	<if(linkop := twoway()){>public <target> <fname>b;<}><}>	
 				'	<for (r <- rules) {>
-				'	<getMethod( r, feats )><}>
+				'	<getMethod( structName, r, feats )><}>
 				'}";
 	}
 	throw "Invalid Struct";
@@ -51,8 +51,8 @@ str getLType( double() ) = "double";
 //
 //BEGIN rule definitions
 //append: defines a adding method for a linked list like struct, good example of final method parameter generation, this creates a parameter for each data member of the target node 
-str getMethod( rule(str name, "append", [str connectionName]), list[LNODEFEATURE] features){
-	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- features ){
+str getMethod( str lnodeName, rule(str name, "append", [str connectionName]), list[LNODEFEATURE] features){
+	if( connect(connectionName, LINKOPERATOR linkop,_) <- features ){
 		return 	"public <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- features ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
 				'	<for (lvalue(str pname,_) <- features) {>
@@ -68,13 +68,14 @@ str getMethod( rule(str name, "append", [str connectionName]), list[LNODEFEATURE
 				'		current.<connectionName> = newNode;
 				'		newNode.<connectionName>b = current;<}>
 				'	}
+				'	return handle;
 				'};";
 	};
 	throw "Invalid Rule description append";
 }
 
 //prepend: similar as above, adds new list elements to the front of the list
-str getMethod( rule(str name, "prepend", [str lnodeName, str connectionName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "prepend", [str lnodeName, str connectionName]), list[LNODEFEATURE] feats){
 	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats ){
 		return 	"public <lnodeName> <name>( <lnodeName> handle, <intercalate(",",[ "<getLType(ltype)> <pname>"| lvalue(str pname, LTYPE ltype) <- feats ])>){
 				'	<lnodeName> newNode = new <lnodeName>();
@@ -82,11 +83,11 @@ str getMethod( rule(str name, "prepend", [str lnodeName, str connectionName]), l
 				'	newNode.<pname> = <pname>;<}>
 				'	<if (linkop := oneway()) {>
 				'	newNode.<connectionName> = handle;
-				'	handle = newNode;<}>
+				'	return newNode;<}>
 				'	<if (linkop := twoway()) {>
 				'	newNode.<connectionName> = handle;
 				'	handle.<connectionName>b = newNode;
-				'	handle = newNode;<}>
+				'	return newNode;<}>
 				'};";
 	};
 	throw "Invalid Rule description prepend";
@@ -131,7 +132,7 @@ str getMethod( rule(str name, "addbin", [str lnodeName, str connectNameLeft, str
 }
 
 //remove: delete function for link list like structures
-str getMethod( rule(str name, "remove", [str lnodeName, str connectionName, str lvalueName]), list[LNODEFEATURE] feats){
+str getMethod( str lnodeName, rule(str name, "remove", [str connectionName, str lvalueName]), list[LNODEFEATURE] feats){
 	if( connect(connectionName, LINKOPERATOR linkop, lnodeName) <- feats,
 		lvalue(lvalueName, LTYPE ltype) <- feats ){
 		return  "public <lnodeName> <name>( <lnodeName> handle, <getLType(ltype)> <lvalueName>){
@@ -161,6 +162,7 @@ str getMethod( rule(str name, "remove", [str lnodeName, str connectionName, str 
 				'			current.<connectionName>.<connectionName>b = current.<connectionName>b;
 				'		}
 				'	}<}>
+				'	return handle;
 				'}";
 	};
 	throw "Invalid Rule description remove";

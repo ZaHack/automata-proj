@@ -6,4 +6,4 @@ public str ex1 =
  ^ data \<- int
 end
 Rule add append( next )
-Rule delete remove( MyList, next, data)";
+Rule delete remove( next, data)";
